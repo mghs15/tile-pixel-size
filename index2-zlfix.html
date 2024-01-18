@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<title>ピクセルの緯度毎の大きさ</title>
+<meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+<script src='./measure.js'></script>
+<style>
+
+</style>
+<body>
+
+<div id='result'></div>
+  
+<script>
+
+
+//Reference: Slippy map tilenames
+//https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames
+const lon2tile = (lon,zoom) => { return (Math.floor((lon+180)/360*Math.pow(2,zoom))); }
+
+const lat2tile = (lat,zoom) => { return (Math.floor((1-Math.log(Math.tan(lat*Math.PI/180) + 1/Math.cos(lat*Math.PI/180))/Math.PI)/2 *Math.pow(2,zoom))); }
+
+const lon2tiled = (lon,zoom) => { return ((lon+180)/360*Math.pow(2,zoom)); }
+
+const lat2tiled = (lat,zoom) => { return ((1-Math.log(Math.tan(lat*Math.PI/180) + 1/Math.cos(lat*Math.PI/180))/Math.PI)/2 *Math.pow(2,zoom)); }
+
+const tile2long = (x,z) => {
+  return (x/Math.pow(2,z)*360-180);
+}
+
+const tile2lat = (y,z) => {
+  const n=Math.PI-2*Math.PI*y/Math.pow(2,z);
+  return (180/Math.PI*Math.atan(0.5*(Math.exp(n)-Math.exp(-n))));
+}
+
+
+// 東京駅
+//let x = 232846;
+let z = 17 + 8;
+
+const log = document.getElementById("result");
+
+log.innerHTML += "| 緯度 | 大きさ（X 方向）| タイル座標|" + "<br>";
+log.innerHTML += "| --:  | --:             |       :-- |" + "<br>";
+
+for(let i=0; i < 17; i++){
+  
+  let lng = 135;
+  let lat = i * 5;
+  
+  let x = lon2tile(lng, z);
+  let y = lat2tile(lat, z);
+  
+  const x1 = tile2long(x,z);
+  const y1 = tile2lat(y,z);
+  const x2 = tile2long(x+1,z);
+  const y2 = tile2lat(y+1,z);
+  
+  console.log(x1, x2, y1, y2);
+  
+  const dx = GSI.Utils.DistanceCalculator.calc({"lng":x1,"lat":y2}, {"lng":x2,"lat":y2}) * 100;
+  const dy = GSI.Utils.DistanceCalculator.calc({"lng":x1,"lat":y1}, {"lng":x1,"lat":y2}) * 100;
+  
+  const ratio = dx / dy;
+  
+  const s = `|${lat}|${ratio}|${dx}|${dy}|${z}/${x}/${y}|`;
+  log.innerHTML += `|${lat}|${Math.round(dx)} cm|${z}/${x}/${y}|` + "<br>";
+  
+  //`|${lat}|${Math.round((ratio-1)*10000)/100}%|${Math.round(dx*100)/100} cm|${Math.round(dy*100)/100} cm|${z}/${x}/${y}|` + "<br>";
+  
+  x = x >> 1;
+  y = y >> 1;
+} 
+
+</script>
+
+</body>
+</html>
